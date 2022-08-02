@@ -17,8 +17,8 @@ from trackformer.util.misc import nested_dict_to_namespace
 WORK_DIR = str(Path(__file__).parent.absolute())
 
 
-ex = sacred.Experiment('submit', ingredients=[train.ex])
-ex.add_config('cfgs/submit.yaml')
+ex = sacred.Experiment("submit", ingredients=[train.ex])
+ex.add_config("cfgs/submit.yaml")
 
 
 def get_shared_folder() -> Path:
@@ -47,6 +47,7 @@ class Trainer:
         sys.path.append(WORK_DIR)
 
         import train
+
         self._setup_gpu_args()
         train.train(self.args)
 
@@ -72,7 +73,9 @@ class Trainer:
         import submitit
 
         job_env = submitit.JobEnvironment()
-        self.args.output_dir = Path(str(self.args.output_dir).replace("%j", str(job_env.job_id)))
+        self.args.output_dir = Path(
+            str(self.args.output_dir).replace("%j", str(job_env.job_id))
+        )
         print(self.args.output_dir)
         self.args.gpu = job_env.local_rank
         self.args.rank = job_env.global_rank
@@ -86,7 +89,8 @@ def main(args: Namespace):
         args.job_dir = get_shared_folder() / "%j"
 
     executor = submitit.AutoExecutor(
-        folder=args.job_dir, cluster=args.cluster, slurm_max_num_timeout=30)
+        folder=args.job_dir, cluster=args.cluster, slurm_max_num_timeout=30
+    )
 
     # cluster setup is defined by environment variables
     num_gpus_per_node = args.num_gpus
@@ -96,7 +100,7 @@ def main(args: Namespace):
     if args.slurm_gres:
         slurm_gres = args.slurm_gres
     else:
-        slurm_gres = f'gpu:{num_gpus_per_node},VRAM:{args.vram}'
+        slurm_gres = f"gpu:{num_gpus_per_node},VRAM:{args.vram}"
 
     executor.update_parameters(
         mem_gb=args.mem_per_gpu * num_gpus_per_node,
@@ -109,7 +113,7 @@ def main(args: Namespace):
         slurm_constraint=args.slurm_constraint,
         slurm_comment=args.slurm_comment,
         slurm_exclude=args.slurm_exclude,
-        slurm_gres=slurm_gres
+        slurm_gres=slurm_gres,
     )
 
     executor.update_parameters(name="fair_track")
@@ -122,7 +126,7 @@ def main(args: Namespace):
 
     print("Submitted job_id:", job.job_id)
 
-    if args.cluster == 'debug':
+    if args.cluster == "debug":
         job.wait()
 
 
@@ -132,7 +136,7 @@ def load_config(_config, _run):
     sacred.commands.print_config(_run)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # TODO: hierachical Namespacing for nested dict
     config = ex.run_commandline().config
     args = nested_dict_to_namespace(config)

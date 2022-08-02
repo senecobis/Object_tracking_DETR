@@ -20,10 +20,16 @@ class MOTS20Sequence(MOT17Sequence):
     This dataloader is designed so that it can handle only one sequence,
     if more have to be handled one should inherit from this class.
     """
-    data_folder = 'MOTS20'
 
-    def __init__(self, root_dir: str = 'data', seq_name: Optional[str] = None,
-                 vis_threshold: float = 0.0, img_transform: Namespace = None) -> None:
+    data_folder = "MOTS20"
+
+    def __init__(
+        self,
+        root_dir: str = "data",
+        seq_name: Optional[str] = None,
+        vis_threshold: float = 0.0,
+        img_transform: Namespace = None,
+    ) -> None:
         """
         Args:
             seq_name (string): Sequence to take
@@ -76,19 +82,22 @@ class MOTS20Sequence(MOT17Sequence):
         result_file_path = osp.join(output_dir, f"{self._seq_name}.txt")
 
         with open(result_file_path, "w") as res_file:
-            writer = csv.writer(res_file, delimiter=' ')
+            writer = csv.writer(res_file, delimiter=" ")
             for i, track in results.items():
                 for frame, data in track.items():
-                    mask = np.asfortranarray(data['mask'])
+                    mask = np.asfortranarray(data["mask"])
                     rle_mask = rletools.encode(mask)
 
-                    writer.writerow([
-                        frame + 1,
-                        i + 1,
-                        2,  # class pedestrian
-                        mask.shape[0],
-                        mask.shape[1],
-                        rle_mask['counts'].decode(encoding='UTF-8')])
+                    writer.writerow(
+                        [
+                            frame + 1,
+                            i + 1,
+                            2,  # class pedestrian
+                            mask.shape[0],
+                            mask.shape[1],
+                            rle_mask["counts"].decode(encoding="UTF-8"),
+                        ]
+                    )
 
     def load_results(self, results_dir: str) -> dict:
         results = {}
@@ -127,9 +136,11 @@ class MOTS20Sequence(MOT17Sequence):
                     results[track_id] = {}
 
                 results[track_id][frame_id - 1] = {}
-                results[track_id][frame_id - 1]['mask'] = rletools.decode(mask_object.mask)
-                results[track_id][frame_id - 1]['bbox'] = bbox.tolist()
-                results[track_id][frame_id - 1]['score'] = 1.0
+                results[track_id][frame_id - 1]["mask"] = rletools.decode(
+                    mask_object.mask
+                )
+                results[track_id][frame_id - 1]["bbox"] = bbox.tolist()
+                results[track_id][frame_id - 1]["score"] = 1.0
 
         return results
 
@@ -141,6 +152,7 @@ class SegmentedObject:
     """
     Helper class for segmentation objects.
     """
+
     def __init__(self, mask: dict, class_id: int, track_id: int) -> None:
         self.mask = mask
         self.class_id = class_id
@@ -164,31 +176,32 @@ def load_mots_gt(path: str) -> dict:
             if frame not in track_ids_per_frame:
                 track_ids_per_frame[frame] = set()
             if int(fields[1]) in track_ids_per_frame[frame]:
-                assert False, f"Multiple objects with track id {fields[1]} in frame {fields[0]}"
+                assert (
+                    False
+                ), f"Multiple objects with track id {fields[1]} in frame {fields[0]}"
             else:
                 track_ids_per_frame[frame].add(int(fields[1]))
 
             class_id = int(fields[2])
-            if not(class_id == 1 or class_id == 2 or class_id == 10):
+            if not (class_id == 1 or class_id == 2 or class_id == 10):
                 assert False, "Unknown object class " + fields[2]
 
             mask = {
-                'size': [int(fields[3]), int(fields[4])],
-                'counts': fields[5].encode(encoding='UTF-8')}
+                "size": [int(fields[3]), int(fields[4])],
+                "counts": fields[5].encode(encoding="UTF-8"),
+            }
             if frame not in combined_mask_per_frame:
                 combined_mask_per_frame[frame] = mask
-            elif rletools.area(rletools.merge([
-                    combined_mask_per_frame[frame], mask],
-                    intersect=True)):
+            elif rletools.area(
+                rletools.merge([combined_mask_per_frame[frame], mask], intersect=True)
+            ):
                 assert False, "Objects with overlapping masks in frame " + fields[0]
             else:
                 combined_mask_per_frame[frame] = rletools.merge(
-                    [combined_mask_per_frame[frame], mask],
-                    intersect=False)
-            objects_per_frame[frame].append(SegmentedObject(
-                mask,
-                class_id,
-                int(fields[1])
-            ))
+                    [combined_mask_per_frame[frame], mask], intersect=False
+                )
+            objects_per_frame[frame].append(
+                SegmentedObject(mask, class_id, int(fields[1]))
+            )
 
     return objects_per_frame

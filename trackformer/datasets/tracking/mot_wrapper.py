@@ -20,11 +20,23 @@ class MOT17Wrapper(Dataset):
         kwargs -- kwargs for the MOT17Sequence dataset
         """
         train_sequences = [
-            'MOT17-02', 'MOT17-04', 'MOT17-05', 'MOT17-09',
-            'MOT17-10', 'MOT17-11', 'MOT17-13']
+            "MOT17-02",
+            "MOT17-04",
+            "MOT17-05",
+            "MOT17-09",
+            "MOT17-10",
+            "MOT17-11",
+            "MOT17-13",
+        ]
         test_sequences = [
-            'MOT17-01', 'MOT17-03', 'MOT17-06', 'MOT17-07',
-            'MOT17-08', 'MOT17-12', 'MOT17-14']
+            "MOT17-01",
+            "MOT17-03",
+            "MOT17-06",
+            "MOT17-07",
+            "MOT17-08",
+            "MOT17-12",
+            "MOT17-14",
+        ]
 
         if split == "TRAIN":
             sequences = train_sequences
@@ -40,10 +52,10 @@ class MOT17Wrapper(Dataset):
 
         self._data = []
         for seq in sequences:
-            if dets == 'ALL':
-                self._data.append(MOT17Sequence(seq_name=seq, dets='DPM', **kwargs))
-                self._data.append(MOT17Sequence(seq_name=seq, dets='FRCNN', **kwargs))
-                self._data.append(MOT17Sequence(seq_name=seq, dets='SDP', **kwargs))
+            if dets == "ALL":
+                self._data.append(MOT17Sequence(seq_name=seq, dets="DPM", **kwargs))
+                self._data.append(MOT17Sequence(seq_name=seq, dets="FRCNN", **kwargs))
+                self._data.append(MOT17Sequence(seq_name=seq, dets="SDP", **kwargs))
             else:
                 self._data.append(MOT17Sequence(seq_name=seq, dets=dets, **kwargs))
 
@@ -64,8 +76,8 @@ class MOT20Wrapper(Dataset):
         split -- the split of the dataset to use
         kwargs -- kwargs for the MOT20Sequence dataset
         """
-        train_sequences = ['MOT20-01', 'MOT20-02', 'MOT20-03', 'MOT20-05',]
-        test_sequences = ['MOT20-04', 'MOT20-06', 'MOT20-07', 'MOT20-08',]
+        train_sequences = ["MOT20-01", "MOT20-02", "MOT20-03", "MOT20-05"]
+        test_sequences = ["MOT20-04", "MOT20-06", "MOT20-07", "MOT20-08"]
 
         if split == "TRAIN":
             sequences = train_sequences
@@ -100,8 +112,8 @@ class MOTS20Wrapper(MOT17Wrapper):
         split -- the split of the dataset to use
         kwargs -- kwargs for the MOTS20Sequence dataset
         """
-        train_sequences = ['MOTS20-02', 'MOTS20-05', 'MOTS20-09', 'MOTS20-11']
-        test_sequences = ['MOTS20-01', 'MOTS20-06', 'MOTS20-07', 'MOTS20-12']
+        train_sequences = ["MOTS20-02", "MOTS20-05", "MOTS20-09", "MOTS20-11"]
+        test_sequences = ["MOTS20-01", "MOTS20-06", "MOTS20-07", "MOTS20-12"]
 
         if split == "TRAIN":
             sequences = train_sequences

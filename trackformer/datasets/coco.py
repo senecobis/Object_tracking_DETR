@@ -21,17 +21,35 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
     fields = ["labels", "area", "iscrowd", "boxes", "track_ids", "masks"]
 
-    def __init__(self,  img_folder, ann_file, transforms, norm_transforms,
-                 return_masks=False, overflow_boxes=False, remove_no_obj_imgs=True,
-                 prev_frame=False, prev_frame_rnd_augs=0.0, prev_prev_frame=False):
+    def __init__(
+        self,
+        img_folder,
+        ann_file,
+        transforms,
+        norm_transforms,
+        return_masks=False,
+        overflow_boxes=False,
+        remove_no_obj_imgs=True,
+        prev_frame=False,
+        prev_frame_rnd_augs=0.0,
+        prev_prev_frame=False,
+    ):
         super(CocoDetection, self).__init__(img_folder, ann_file)
         self._transforms = transforms
         self._norm_transforms = norm_transforms
         self.prepare = ConvertCocoPolysToMask(return_masks, overflow_boxes)
 
         if remove_no_obj_imgs:
-            self.ids = sorted(list(set(
-                [ann['image_id'] for ann in self.coco.loadAnns(self.coco.getAnnIds())])))
+            self.ids = sorted(
+                list(
+                    set(
+                        [
+                            ann["image_id"]
+                            for ann in self.coco.loadAnns(self.coco.getAnnIds())
+                        ]
+                    )
+                )
+            )
 
         self._prev_frame = prev_frame
         self._prev_frame_rnd_augs = prev_frame_rnd_augs
@@ -43,19 +61,19 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         # frames have independent jitter.
         if random_state is not None:
             curr_random_state = {
-                'random': random.getstate(),
-                'torch': torch.random.get_rng_state()}
-            random.setstate(random_state['random'])
-            torch.random.set_rng_state(random_state['torch'])
+                "random": random.getstate(),
+                "torch": torch.random.get_rng_state(),
+            }
+            random.setstate(random_state["random"])
+            torch.random.set_rng_state(random_state["torch"])
 
         img, target = super(CocoDetection, self).__getitem__(image_id)
         image_id = self.ids[image_id]
-        target = {'image_id': image_id,
-                  'annotations': target}
+        target = {"image_id": image_id, "annotations": target}
         img, target = self.prepare(img, target)
 
-        if 'track_ids' not in target:
-            target['track_ids'] = torch.arange(len(target['labels']))
+        if "track_ids" not in target:
+            target["track_ids"] = torch.arange(len(target["labels"]))
 
         if self._transforms is not None:
             img, target = self._transforms(img, target)
@@ -68,8 +86,8 @@ class CocoDetection(torchvision.datasets.CocoDetection):
                 target[field] = target[field][~ignore]
 
         if random_state is not None:
-            random.setstate(curr_random_state['random'])
-            torch.random.set_rng_state(curr_random_state['torch'])
+            random.setstate(curr_random_state["random"])
+            torch.random.set_rng_state(curr_random_state["torch"])
 
         if random_jitter:
             img, target = self._add_random_jitter(img, target)
@@ -82,8 +100,8 @@ class CocoDetection(torchvision.datasets.CocoDetection):
             orig_w, orig_h = img.size
 
             crop_width = random.randint(
-                int((1.0 - self._prev_frame_rnd_augs) * orig_w),
-                orig_w)
+                int((1.0 - self._prev_frame_rnd_augs) * orig_w), orig_w
+            )
             crop_height = int(orig_h * crop_width / orig_w)
 
             transform = T.RandomCrop((crop_height, crop_width))
@@ -136,21 +154,24 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
     def __getitem__(self, idx):
         random_state = {
-            'random': random.getstate(),
-            'torch': torch.random.get_rng_state()}
+            "random": random.getstate(),
+            "torch": torch.random.get_rng_state(),
+        }
         img, target = self._getitem_from_id(idx, random_state)
 
         if self._prev_frame:
             # PREV
             prev_img, prev_target = self._getitem_from_id(idx, random_state)
-            target[f'prev_image'] = prev_img
-            target[f'prev_target'] = prev_target
+            target[f"prev_image"] = prev_img
+            target[f"prev_target"] = prev_target
 
             if self._prev_prev_frame:
                 # PREV PREV
-                prev_prev_img, prev_prev_target = self._getitem_from_id(idx, random_state)
-                target[f'prev_prev_image'] = prev_prev_img
-                target[f'prev_prev_target'] = prev_prev_target
+                prev_prev_img, prev_prev_target = self._getitem_from_id(
+                    idx, random_state
+                )
+                target[f"prev_prev_image"] = prev_prev_img
+                target[f"prev_prev_target"] = prev_prev_target
 
         return img, target
 
@@ -162,11 +183,13 @@ def convert_coco_poly_to_mask(segmentations, height, width):
     masks = []
     for polygons in segmentations:
 
-        #print(f"\n polygons {polygons}, \n height {height}, \n width {width} \n in coco")
+        # print(f"\n polygons {polygons}, \n height {height}, \n width {width} \n in coco")
 
         if isinstance(polygons, dict):
-            rles = {'size': polygons['size'],
-                    'counts': polygons['counts'].encode(encoding='UTF-8')}
+            rles = {
+                "size": polygons["size"],
+                "counts": polygons["counts"].encode(encoding="UTF-8"),
+            }
         else:
             rles = coco_mask.frPyObjects(polygons, height, width)
         mask = coco_mask.decode(rles)
@@ -195,7 +218,7 @@ class ConvertCocoPolysToMask(object):
 
         anno = target["annotations"]
 
-        anno = [obj for obj in anno if 'iscrowd' not in obj or obj['iscrowd'] == 0]
+        anno = [obj for obj in anno if "iscrowd" not in obj or obj["iscrowd"] == 0]
 
         boxes = [obj["bbox"] for obj in anno]
         # guard against no boxes via resizing
@@ -248,7 +271,9 @@ class ConvertCocoPolysToMask(object):
 
         # for conversion to coco api
         area = torch.tensor([obj["area"] for obj in anno])
-        iscrowd = torch.tensor([obj["iscrowd"] if "iscrowd" in obj else 0 for obj in anno])
+        iscrowd = torch.tensor(
+            [obj["iscrowd"] if "iscrowd" in obj else 0 for obj in anno]
+        )
         ignore = torch.tensor([obj["ignore"] if "ignore" in obj else 0 for obj in anno])
 
         target["area"] = area[keep]
@@ -262,10 +287,9 @@ class ConvertCocoPolysToMask(object):
 
 
 def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False):
-    normalize = T.Compose([
-        T.ToTensor(),
-        T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
+    normalize = T.Compose(
+        [T.ToTensor(), T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+    )
     # default
     max_size = 1333
     val_width = 800
@@ -283,53 +307,61 @@ def make_coco_transforms(image_set, img_transform=None, overflow_boxes=False):
         random_resizes = [int(scale * s) for s in random_resizes]
         random_size_crop = [int(scale * s) for s in random_size_crop]
 
-    if image_set == 'train':
+    if image_set == "train":
         transforms = [
             T.RandomHorizontalFlip(),
             T.RandomSelect(
                 T.RandomResize(scales, max_size=max_size),
-                T.Compose([
-                    T.RandomResize(random_resizes),
-                    T.RandomSizeCrop(*random_size_crop, overflow_boxes=overflow_boxes),
-                    T.RandomResize(scales, max_size=max_size),
-                ])
+                T.Compose(
+                    [
+                        T.RandomResize(random_resizes),
+                        T.RandomSizeCrop(
+                            *random_size_crop, overflow_boxes=overflow_boxes
+                        ),
+                        T.RandomResize(scales, max_size=max_size),
+                    ]
+                ),
             ),
         ]
-    elif image_set == 'val':
-        transforms = [
-            T.RandomResize([val_width], max_size=max_size),
-        ]
+    elif image_set == "val":
+        transforms = [T.RandomResize([val_width], max_size=max_size)]
     else:
-        ValueError(f'unknown {image_set}')
+        ValueError(f"unknown {image_set}")
 
     # transforms.append(normalize)
     return T.Compose(transforms), normalize
 
 
-def build(image_set, args, mode='instances'):
+def build(image_set, args, mode="instances"):
     root = Path(args.coco_path)
-    assert root.exists(), f'provided COCO path {root} does not exist'
+    assert root.exists(), f"provided COCO path {root} does not exist"
 
     # image_set is 'train' or 'val'
     split = getattr(args, f"{image_set}_split")
 
     splits = {
-        "train": (root / "train2017", root / "annotations" / f'{mode}_train2017.json'),
-        "val": (root / "val2017", root / "annotations" / f'{mode}_val2017.json'),
+        "train": (root / "train2017", root / "annotations" / f"{mode}_train2017.json"),
+        "val": (root / "val2017", root / "annotations" / f"{mode}_val2017.json"),
     }
 
-    if image_set == 'train':
+    if image_set == "train":
         prev_frame_rnd_augs = args.coco_and_crowdhuman_prev_frame_rnd_augs
-    elif image_set == 'val':
+    elif image_set == "val":
         prev_frame_rnd_augs = 0.0
 
-    transforms, norm_transforms = make_coco_transforms(image_set, args.img_transform, args.overflow_boxes)
+    transforms, norm_transforms = make_coco_transforms(
+        image_set, args.img_transform, args.overflow_boxes
+    )
     img_folder, ann_file = splits[split]
     dataset = CocoDetection(
-        img_folder, ann_file, transforms, norm_transforms,
+        img_folder,
+        ann_file,
+        transforms,
+        norm_transforms,
         return_masks=args.masks,
         prev_frame=args.tracking,
         prev_frame_rnd_augs=prev_frame_rnd_augs,
-        prev_prev_frame=args.track_prev_prev_frame)
+        prev_prev_frame=args.track_prev_prev_frame,
+    )
 
     return dataset

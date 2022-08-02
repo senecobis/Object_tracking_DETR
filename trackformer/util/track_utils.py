@@ -140,12 +140,12 @@ def plot_sequence(tracks, data_loader, output_dir, write_images, generate_attent
     # styles = defaultdict(lambda: next(loop_cy_iter))
 
     # cmap = plt.cm.get_cmap('hsv', )
-    #mx = 0
-    mx = 6
+    mx = 0
+    #mx = 6
     for track_id, track_data in tracks.items():
-  
-        maxim = max(mx, track_id)
-        minim = min(mx, track_id)
+        mx =  max(mx, track_id)
+        #maxim = max(mx, track_id)
+        #minim = min(mx, track_id)
 
         #print("\n this is mx : ",mx)
         #print("\n this is track_id : ",track_id)

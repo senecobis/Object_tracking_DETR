@@ -4,49 +4,49 @@ import json
 import numpy as np
 
 
-LOG_DIR = 'logs/visdom'
+LOG_DIR = "logs/visdom"
 
-METRICS = ['MOTA', 'IDF1', 'BBOX AP IoU=0.50:0.95', 'MASK AP IoU=0.50:0.95']
-
-RUNS = [
-    'mot17_train_1_deformable_full_res',
-    'mot17_train_2_deformable_full_res',
-    'mot17_train_3_deformable_full_res',
-    'mot17_train_4_deformable_full_res',
-    'mot17_train_5_deformable_full_res',
-    'mot17_train_6_deformable_full_res',
-    'mot17_train_7_deformable_full_res',
-    ]
+METRICS = ["MOTA", "IDF1", "BBOX AP IoU=0.50:0.95", "MASK AP IoU=0.50:0.95"]
 
 RUNS = [
-    'mot17_train_1_no_pretrain_deformable_tracking',
-    'mot17_train_2_no_pretrain_deformable_tracking',
-    'mot17_train_3_no_pretrain_deformable_tracking',
-    'mot17_train_4_no_pretrain_deformable_tracking',
-    'mot17_train_5_no_pretrain_deformable_tracking',
-    'mot17_train_6_no_pretrain_deformable_tracking',
-    'mot17_train_7_no_pretrain_deformable_tracking',
-    ]
+    "mot17_train_1_deformable_full_res",
+    "mot17_train_2_deformable_full_res",
+    "mot17_train_3_deformable_full_res",
+    "mot17_train_4_deformable_full_res",
+    "mot17_train_5_deformable_full_res",
+    "mot17_train_6_deformable_full_res",
+    "mot17_train_7_deformable_full_res",
+]
 
 RUNS = [
-    'mot17_train_1_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_2_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_3_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_4_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_5_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_6_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_7_coco_pretrain_deformable_tracking_lr=0.00001',
-    ]
+    "mot17_train_1_no_pretrain_deformable_tracking",
+    "mot17_train_2_no_pretrain_deformable_tracking",
+    "mot17_train_3_no_pretrain_deformable_tracking",
+    "mot17_train_4_no_pretrain_deformable_tracking",
+    "mot17_train_5_no_pretrain_deformable_tracking",
+    "mot17_train_6_no_pretrain_deformable_tracking",
+    "mot17_train_7_no_pretrain_deformable_tracking",
+]
 
 RUNS = [
-    'mot17_train_1_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_2_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_3_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_4_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_5_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_6_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001',
-    'mot17_train_7_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001',
-    ]
+    "mot17_train_1_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_2_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_3_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_4_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_5_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_6_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_7_coco_pretrain_deformable_tracking_lr=0.00001",
+]
+
+RUNS = [
+    "mot17_train_1_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_2_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_3_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_4_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_5_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_6_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001",
+    "mot17_train_7_crowdhuman_coco_pretrain_deformable_tracking_lr=0.00001",
+]
 
 # RUNS = [
 #     'mot17_train_1_no_pretrain_deformable_tracking_eos_coef=0.2',
@@ -79,14 +79,14 @@ RUNS = [
 #     ]
 
 # RUNS = [
-    # 'mot17_train_1_no_pretrain_deformable_tracking_save_model_interval=1',
-    # 'mot17_train_2_no_pretrain_deformable_tracking_save_model_interval=1',
-    # 'mot17_train_3_no_pretrain_deformable_tracking_save_model_interval=1',
-    # 'mot17_train_4_no_pretrain_deformable_tracking_save_model_interval=1',
-    # 'mot17_train_5_no_pretrain_deformable_tracking_save_model_interval=1',
-    # 'mot17_train_6_no_pretrain_deformable_tracking_save_model_interval=1',
-    # 'mot17_train_7_no_pretrain_deformable_tracking_save_model_interval=1',
-    # ]
+# 'mot17_train_1_no_pretrain_deformable_tracking_save_model_interval=1',
+# 'mot17_train_2_no_pretrain_deformable_tracking_save_model_interval=1',
+# 'mot17_train_3_no_pretrain_deformable_tracking_save_model_interval=1',
+# 'mot17_train_4_no_pretrain_deformable_tracking_save_model_interval=1',
+# 'mot17_train_5_no_pretrain_deformable_tracking_save_model_interval=1',
+# 'mot17_train_6_no_pretrain_deformable_tracking_save_model_interval=1',
+# 'mot17_train_7_no_pretrain_deformable_tracking_save_model_interval=1',
+# ]
 
 # RUNS = [
 #     'mot17_train_1_no_pretrain_deformable_full_res',
@@ -187,7 +187,7 @@ RUNS = [
 #     'mot17det_train_4_mots_track_bbox_proposals_pretrain_train_6_mots_vis_save_model_interval_1',
 # ]
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     results = {}
 
     for r in RUNS:
@@ -198,21 +198,23 @@ if __name__ == '__main__':
             data = json.load(json_file)
 
             window = [
-                window for window in data['jsons'].values()
-                if window['title'] == 'VAL EVAL EPOCHS'][0]
+                window
+                for window in data["jsons"].values()
+                if window["title"] == "VAL EVAL EPOCHS"
+            ][0]
 
             for m in METRICS:
-                if m not in window['legend']:
+                if m not in window["legend"]:
                     continue
                 elif m not in results:
                     results[m] = []
 
-                idxs = window['legend'].index(m)
+                idxs = window["legend"].index(m)
 
-                values = window['content']['data'][idxs]['y']
+                values = window["content"]["data"][idxs]["y"]
                 results[m].append(values)
 
-        print(f'NUM EPOCHS: {len(values)}')
+        print(f"NUM EPOCHS: {len(values)}")
 
     min_length = min([len(l) for l in next(iter(results.values()))])
 
@@ -220,13 +222,14 @@ if __name__ == '__main__':
         results[metric] = [l[:min_length] for l in results[metric]]
 
     mean_results = {
-        metric: np.array(results[metric]).mean(axis=0)
-        for metric in results.keys()}
+        metric: np.array(results[metric]).mean(axis=0) for metric in results.keys()
+    }
 
     print("* METRIC INTERVAL = BEST EPOCHS")
     for metric in results.keys():
         best_interval = mean_results[metric].argmax()
         print(mean_results[metric])
         print(
-            f'{metric}: {mean_results[metric].max():.2%} at {best_interval + 1}/{len(mean_results[metric])} '
-            f'{[(mmetric, f"{mean_results[mmetric][best_interval]:.2%}") for mmetric in results.keys() if not mmetric == metric]}')
+            f"{metric}: {mean_results[metric].max():.2%} at {best_interval + 1}/{len(mean_results[metric])} "
+            f'{[(mmetric, f"{mean_results[mmetric][best_interval]:.2%}") for mmetric in results.keys() if not mmetric == metric]}'
+        )

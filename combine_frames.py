@@ -7,13 +7,13 @@ import os.path as osp
 
 from PIL import Image
 
-OUTPUT_DIR = 'models/mot17_masks_track_rcnn_and_v3_combined'
+OUTPUT_DIR = "models/mot17_masks_track_rcnn_and_v3_combined"
 
-FRAME_DIR_1 = 'models/mot17_masks_track_rcnn/MOTS20-TEST'
-FRAME_DIR_2 = 'models/mot17_masks_v3/MOTS20-ALL'
+FRAME_DIR_1 = "models/mot17_masks_track_rcnn/MOTS20-TEST"
+FRAME_DIR_2 = "models/mot17_masks_v3/MOTS20-ALL"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     seqs_1 = os.listdir(FRAME_DIR_1)
     seqs_2 = os.listdir(FRAME_DIR_2)
 
@@ -36,8 +36,8 @@ if __name__ == '__main__':
                 width = img_1.size[0]
                 height = img_2.size[1]
 
-                combined_frame = Image.new('RGB', (width, height * 2))
+                combined_frame = Image.new("RGB", (width, height * 2))
                 combined_frame.paste(img_1, (0, 0))
                 combined_frame.paste(img_2, (0, height))
 
-                combined_frame.save(osp.join(seg_output_dir, f'{frame}'))
+                combined_frame.save(osp.join(seg_output_dir, f"{frame}"))

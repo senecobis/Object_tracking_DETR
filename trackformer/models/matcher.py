@@ -18,8 +18,14 @@ class HungarianMatcher(nn.Module):
     predictions, while the others are un-matched (and thus treated as non-objects).
     """
 
-    def __init__(self, cost_class: float = 1, cost_bbox: float = 1, cost_giou: float = 1,
-                 focal_loss: bool = False, focal_alpha: float = 0.25):
+    def __init__(
+        self,
+        cost_class: float = 1,
+        cost_bbox: float = 1,
+        cost_giou: float = 1,
+        focal_loss: bool = False,
+        focal_alpha: float = 0.25,
+    ):
         """Creates the matcher
 
         Params:
@@ -35,7 +41,9 @@ class HungarianMatcher(nn.Module):
         self.cost_giou = cost_giou
         self.focal_loss = focal_loss
         self.focal_alpha = focal_alpha
-        assert cost_class != 0 or cost_bbox != 0 or cost_giou != 0, "all costs cant be 0"
+        assert (
+            cost_class != 0 or cost_bbox != 0 or cost_giou != 0
+        ), "all costs cant be 0"
 
     @torch.no_grad()
     def forward(self, outputs, targets):
@@ -81,8 +89,16 @@ class HungarianMatcher(nn.Module):
         # Compute the classification cost.
         if self.focal_loss:
             gamma = 2.0
-            neg_cost_class = (1 - self.focal_alpha) * (out_prob ** gamma) * (-(1 - out_prob + 1e-8).log())
-            pos_cost_class = self.focal_alpha * ((1 - out_prob) ** gamma) * (-(out_prob + 1e-8).log())
+            neg_cost_class = (
+                (1 - self.focal_alpha)
+                * (out_prob ** gamma)
+                * (-(1 - out_prob + 1e-8).log())
+            )
+            pos_cost_class = (
+                self.focal_alpha
+                * ((1 - out_prob) ** gamma)
+                * (-(out_prob + 1e-8).log())
+            )
             cost_class = pos_cost_class[:, tgt_ids] - neg_cost_class[:, tgt_ids]
         else:
             # Contrary to the loss, we don't use the NLL, but approximate it in 1 - proba[target class].
@@ -94,40 +110,52 @@ class HungarianMatcher(nn.Module):
 
         # Compute the giou cost betwen boxes
         cost_giou = -generalized_box_iou(
-            box_cxcywh_to_xyxy(out_bbox),
-            box_cxcywh_to_xyxy(tgt_bbox))
+            box_cxcywh_to_xyxy(out_bbox), box_cxcywh_to_xyxy(tgt_bbox)
+        )
 
         # Final cost matrix
-        cost_matrix = self.cost_bbox * cost_bbox \
-            + self.cost_class * cost_class \
+        cost_matrix = (
+            self.cost_bbox * cost_bbox
+            + self.cost_class * cost_class
             + self.cost_giou * cost_giou
+        )
         cost_matrix = cost_matrix.view(batch_size, num_queries, -1).cpu()
 
         sizes = [len(v["boxes"]) for v in targets]
 
         for i, target in enumerate(targets):
-            if 'track_query_match_ids' not in target:
+            if "track_query_match_ids" not in target:
                 continue
 
             prop_i = 0
             for j in range(cost_matrix.shape[1]):
-                if target['track_queries_fal_pos_mask'][j] or target['track_queries_placeholder_mask'][j]:
+                if (
+                    target["track_queries_fal_pos_mask"][j]
+                    or target["track_queries_placeholder_mask"][j]
+                ):
                     # false positive and palceholder track queries should not
                     # be matched to any target
                     cost_matrix[i, j] = np.inf
-                elif target['track_queries_mask'][j]:
-                    track_query_id = target['track_query_match_ids'][prop_i]
+                elif target["track_queries_mask"][j]:
+                    track_query_id = target["track_query_match_ids"][prop_i]
                     prop_i += 1
 
                     cost_matrix[i, j] = np.inf
                     cost_matrix[i, :, track_query_id + sum(sizes[:i])] = np.inf
                     cost_matrix[i, j, track_query_id + sum(sizes[:i])] = -1
 
-        indices = [linear_sum_assignment(c[i])
-                   for i, c in enumerate(cost_matrix.split(sizes, -1))]
+        indices = [
+            linear_sum_assignment(c[i])
+            for i, c in enumerate(cost_matrix.split(sizes, -1))
+        ]
 
-        return [(torch.as_tensor(i, dtype=torch.int64), torch.as_tensor(j, dtype=torch.int64))
-                for i, j in indices]
+        return [
+            (
+                torch.as_tensor(i, dtype=torch.int64),
+                torch.as_tensor(j, dtype=torch.int64),
+            )
+            for i, j in indices
+        ]
 
 
 def build_matcher(args):
@@ -136,4 +164,5 @@ def build_matcher(args):
         cost_bbox=args.set_cost_bbox,
         cost_giou=args.set_cost_giou,
         focal_loss=args.focal_loss,
-        focal_alpha=args.focal_alpha,)
+        focal_alpha=args.focal_alpha,
+    )

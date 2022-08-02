@@ -19,7 +19,7 @@ def crop(image, target, region, overflow_boxes=False):
     target = target.copy()
 
     if isinstance(image, torch.Tensor):
-        cropped_image = image[:, j:j + w, i:i + h]
+        cropped_image = image[:, j : j + w, i : i + h]
     else:
         cropped_image = F.crop(image, *region)
 
@@ -59,7 +59,7 @@ def crop(image, target, region, overflow_boxes=False):
 
     if "masks" in target:
         # FIXME should we update the area here if there are no boxes?
-        target['masks'] = target['masks'][:, i:i + h, j:j + w]
+        target["masks"] = target["masks"][:, i : i + h, j : j + w]
         fields.append("masks")
 
     # remove elements for which the boxes or masks that have zero area
@@ -67,13 +67,13 @@ def crop(image, target, region, overflow_boxes=False):
         # favor boxes selection when defining which elements to keep
         # this is compatible with previous implementation
         if "boxes" in target:
-            cropped_boxes = target['boxes'].reshape(-1, 2, 2)
+            cropped_boxes = target["boxes"].reshape(-1, 2, 2)
             keep = torch.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], dim=1)
 
             # new area must be at least % of orginal area
             # keep = target["area"] >= orig_area * 0.2
         else:
-            keep = target['masks'].flatten(1).any(1)
+            keep = target["masks"].flatten(1).any(1)
 
         for field in fields:
             if field in target:
@@ -94,20 +94,20 @@ def hflip(image, target):
 
     if "boxes" in target:
         boxes = target["boxes"]
-        boxes = boxes[:, [2, 1, 0, 3]] \
-            * torch.as_tensor([-1, 1, -1, 1]) \
-            + torch.as_tensor([width, 0, width, 0])
+        boxes = boxes[:, [2, 1, 0, 3]] * torch.as_tensor(
+            [-1, 1, -1, 1]
+        ) + torch.as_tensor([width, 0, width, 0])
         target["boxes"] = boxes
 
     if "boxes_ignore" in target:
         boxes = target["boxes_ignore"]
-        boxes = boxes[:, [2, 1, 0, 3]] \
-            * torch.as_tensor([-1, 1, -1, 1]) \
-            + torch.as_tensor([width, 0, width, 0])
+        boxes = boxes[:, [2, 1, 0, 3]] * torch.as_tensor(
+            [-1, 1, -1, 1]
+        ) + torch.as_tensor([width, 0, width, 0])
         target["boxes_ignore"] = boxes
 
     if "masks" in target:
-        target['masks'] = target['masks'].flip(-1)
+        target["masks"] = target["masks"].flip(-1)
 
     return flipped_image, target
 
@@ -147,14 +147,17 @@ def resize(image, target, size, max_size=None):
     if target is None:
         return rescaled_image, None
 
-    ratios = tuple(float(s) / float(s_orig) for s, s_orig in zip(rescaled_image.size, image.size))
+    ratios = tuple(
+        float(s) / float(s_orig) for s, s_orig in zip(rescaled_image.size, image.size)
+    )
     ratio_width, ratio_height = ratios
 
     target = target.copy()
     if "boxes" in target:
         boxes = target["boxes"]
-        scaled_boxes = boxes \
-            * torch.as_tensor([ratio_width, ratio_height, ratio_width, ratio_height])
+        scaled_boxes = boxes * torch.as_tensor(
+            [ratio_width, ratio_height, ratio_width, ratio_height]
+        )
         target["boxes"] = scaled_boxes
 
     if "area" in target:
@@ -166,8 +169,10 @@ def resize(image, target, size, max_size=None):
     target["size"] = torch.tensor([h, w])
 
     if "masks" in target:
-        target['masks'] = interpolate(
-            target['masks'][:, None].float(), size, mode="nearest")[:, 0] > 0.5
+        target["masks"] = (
+            interpolate(target["masks"][:, None].float(), size, mode="nearest")[:, 0]
+            > 0.5
+        )
 
     return rescaled_image, target
 
@@ -184,14 +189,15 @@ def pad(image, target, padding):
     if "boxes" in target:
         # correct xyxy from left and right paddings
         target["boxes"] += torch.tensor(
-            [padding[0], padding[1], padding[0], padding[1]])
+            [padding[0], padding[1], padding[0], padding[1]]
+        )
 
     target["size"] = torch.tensor([h, w])
     if "masks" in target:
         # padding_left, padding_right, padding_top, padding_bottom
-        target['masks'] = torch.nn.functional.pad(
-            target['masks'],
-            (padding[0], padding[2], padding[1], padding[3]))
+        target["masks"] = torch.nn.functional.pad(
+            target["masks"], (padding[0], padding[2], padding[1], padding[3])
+        )
     return padded_image, target
 
 
@@ -207,10 +213,12 @@ class RandomCrop:
 
 
 class RandomSizeCrop:
-    def __init__(self,
-                 min_size: Union[tuple, list, int],
-                 max_size: Union[tuple, list, int] = None,
-                 overflow_boxes: bool = False):
+    def __init__(
+        self,
+        min_size: Union[tuple, list, int],
+        max_size: Union[tuple, list, int] = None,
+        overflow_boxes: bool = False,
+    ):
         if isinstance(min_size, int):
             min_size = (min_size, min_size)
         if isinstance(max_size, int):
@@ -226,11 +234,11 @@ class RandomSizeCrop:
             h = random.randint(min(self.min_size[1], img.height), img.height)
         else:
             w = random.randint(
-                min(self.min_size[0], img.width),
-                min(img.width, self.max_size[0]))
+                min(self.min_size[0], img.width), min(img.width, self.max_size[0])
+            )
             h = random.randint(
-                min(self.min_size[1], img.height),
-                min(img.height, self.max_size[1]))
+                min(self.min_size[1], img.height), min(img.height, self.max_size[1])
+            )
 
         region = T.RandomCrop.get_params(img, [h, w])
         return crop(img, target, region, self.overflow_boxes)
@@ -244,9 +252,14 @@ class CenterCrop:
     def __call__(self, img, target):
         image_width, image_height = img.size
         crop_height, crop_width = self.size
-        crop_top = int(round((image_height - crop_height) / 2.))
-        crop_left = int(round((image_width - crop_width) / 2.))
-        return crop(img, target, (crop_top, crop_left, crop_height, crop_width), self.overflow_boxes)
+        crop_top = int(round((image_height - crop_height) / 2.0))
+        crop_left = int(round((image_width - crop_width) / 2.0))
+        return crop(
+            img,
+            target,
+            (crop_top, crop_left, crop_height, crop_width),
+            self.overflow_boxes,
+        )
 
 
 class RandomHorizontalFlip:
@@ -268,7 +281,7 @@ class RepeatUntilMaxObjects:
         num_objects = None
         while num_objects is None or num_objects > self._num_max_objects:
             img_trans, target_trans = self._transforms(img, target)
-            num_objects = len(target_trans['boxes'])
+            num_objects = len(target_trans["boxes"])
         return img_trans, target_trans
 
 
@@ -293,7 +306,7 @@ class RandomResizeTargets:
 
         rescaled_boxes = []
         rescaled_box_images = []
-        for box in target['boxes']:
+        for box in target["boxes"]:
             y1, x1, y2, x2 = box.int().tolist()
             w = x2 - x1
             h = y2 - y1
@@ -304,25 +317,20 @@ class RandomResizeTargets:
             scaled_height = int(random_scale * h)
 
             box_img = F.to_pil_image(box_img)
-            rescaled_box_image = F.resize(
-                box_img,
-                (scaled_width, scaled_height))
+            rescaled_box_image = F.resize(box_img, (scaled_width, scaled_height))
             rescaled_box_images.append(F.to_tensor(rescaled_box_image))
             rescaled_boxes.append([y1, x1, y1 + scaled_height, x1 + scaled_width])
 
-        for box in target['boxes']:
+        for box in target["boxes"]:
             y1, x1, y2, x2 = box.int().tolist()
             w = x2 - x1
             h = y2 - y1
 
-            erase_value = torch.empty(
-                [img_c, w, h],
-                dtype=torch.float32).normal_()
+            erase_value = torch.empty([img_c, w, h], dtype=torch.float32).normal_()
 
-            img = F.erase(
-                img, x1, y1, w, h, erase_value, True)
+            img = F.erase(img, x1, y1, w, h, erase_value, True)
 
-        for box, rescaled_box_image in zip(target['boxes'], rescaled_box_images):
+        for box, rescaled_box_image in zip(target["boxes"], rescaled_box_images):
             y1, x1, y2, x2 = box.int().tolist()
             w = x2 - x1
             h = y2 - y1
@@ -330,12 +338,13 @@ class RandomResizeTargets:
 
             rescaled_box_image = rescaled_box_image[
                 :,
-                :scaled_width - max(x1 + scaled_width - img_w, 0),
-                :scaled_height - max(y1 + scaled_height - img_h, 0)]
+                : scaled_width - max(x1 + scaled_width - img_w, 0),
+                : scaled_height - max(y1 + scaled_height - img_h, 0),
+            ]
 
-            img[:, x1:x1 + scaled_width, y1:y1 + scaled_height] = rescaled_box_image
+            img[:, x1 : x1 + scaled_width, y1 : y1 + scaled_height] = rescaled_box_image
 
-        target['boxes'] = torch.tensor(rescaled_boxes).float()
+        target["boxes"] = torch.tensor(rescaled_boxes).float()
         img = F.to_pil_image(img)
         return img, target
 
@@ -367,6 +376,7 @@ class RandomSelect:
     Randomly selects between transforms1 and transforms2,
     with probability p for transforms1 and (1 - p) for transforms2
     """
+
     def __init__(self, transforms1, transforms2, p=0.5):
         self.transforms1 = transforms1
         self.transforms2 = transforms2
@@ -384,8 +394,9 @@ class ToTensor:
 
 
 class RandomErasing:
-
-    def __init__(self, p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False):
+    def __init__(
+        self, p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False
+    ):
         self.eraser = T.RandomErasing()
         self.p = p
         self.scale = scale
@@ -398,54 +409,65 @@ class RandomErasing:
             img = F.to_tensor(img)
 
             x, y, h, w, v = self.eraser.get_params(
-                img, scale=self.scale, ratio=self.ratio, value=self.value)
+                img, scale=self.scale, ratio=self.ratio, value=self.value
+            )
 
             img = F.erase(img, x, y, h, w, v, self.inplace)
             img = F.to_pil_image(img)
 
             # target
-            fields = ['boxes', "labels", "area", "iscrowd", "ignore", "track_ids"]
+            fields = ["boxes", "labels", "area", "iscrowd", "ignore", "track_ids"]
 
-            if 'boxes' in target:
+            if "boxes" in target:
                 erased_box = torch.tensor([[y, x, y + w, x + h]]).float()
 
-                lt = torch.max(erased_box[:, None, :2], target['boxes'][:, :2])  # [N,M,2]
-                rb = torch.min(erased_box[:, None, 2:], target['boxes'][:, 2:])  # [N,M,2]
+                lt = torch.max(
+                    erased_box[:, None, :2], target["boxes"][:, :2]
+                )  # [N,M,2]
+                rb = torch.min(
+                    erased_box[:, None, 2:], target["boxes"][:, 2:]
+                )  # [N,M,2]
                 wh = (rb - lt).clamp(min=0)  # [N,M,2]
                 inter = wh[:, :, 0] * wh[:, :, 1]  # [N,M]
 
-                keep = inter[0] <= 0.7 * target['area']
+                keep = inter[0] <= 0.7 * target["area"]
 
                 left = torch.logical_and(
-                    target['boxes'][:, 0] < erased_box[:, 0],
-                    target['boxes'][:, 2] > erased_box[:, 0])
+                    target["boxes"][:, 0] < erased_box[:, 0],
+                    target["boxes"][:, 2] > erased_box[:, 0],
+                )
                 left = torch.logical_and(left, inter[0].bool())
 
                 right = torch.logical_and(
-                    target['boxes'][:, 0] < erased_box[:, 2],
-                    target['boxes'][:, 2] > erased_box[:, 2])
+                    target["boxes"][:, 0] < erased_box[:, 2],
+                    target["boxes"][:, 2] > erased_box[:, 2],
+                )
                 right = torch.logical_and(right, inter[0].bool())
 
                 top = torch.logical_and(
-                    target['boxes'][:, 1] < erased_box[:, 1],
-                    target['boxes'][:, 3] > erased_box[:, 1])
+                    target["boxes"][:, 1] < erased_box[:, 1],
+                    target["boxes"][:, 3] > erased_box[:, 1],
+                )
                 top = torch.logical_and(top, inter[0].bool())
 
                 bottom = torch.logical_and(
-                    target['boxes'][:, 1] < erased_box[:, 3],
-                    target['boxes'][:, 3] > erased_box[:, 3])
+                    target["boxes"][:, 1] < erased_box[:, 3],
+                    target["boxes"][:, 3] > erased_box[:, 3],
+                )
                 bottom = torch.logical_and(bottom, inter[0].bool())
 
-                only_one_crop = (top.float() + bottom.float() + left.float() + right.float()) > 1
+                only_one_crop = (
+                    top.float() + bottom.float() + left.float() + right.float()
+                ) > 1
                 left[only_one_crop] = False
                 right[only_one_crop] = False
                 top[only_one_crop] = False
                 bottom[only_one_crop] = False
 
-                target['boxes'][:, 2][left] = erased_box[:, 0]
-                target['boxes'][:, 0][right] = erased_box[:, 2]
-                target['boxes'][:, 3][top] = erased_box[:, 1]
-                target['boxes'][:, 1][bottom] = erased_box[:, 3]
+                target["boxes"][:, 2][left] = erased_box[:, 0]
+                target["boxes"][:, 0][right] = erased_box[:, 2]
+                target["boxes"][:, 3][top] = erased_box[:, 1]
+                target["boxes"][:, 1][bottom] = erased_box[:, 3]
 
                 for field in fields:
                     if field in target:

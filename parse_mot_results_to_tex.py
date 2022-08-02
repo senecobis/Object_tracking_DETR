@@ -40,7 +40,7 @@ F_CONTENT = """
 #     OVERALL	54.86	69.92	80.62	63.58	181	48	55.18	30.18	14.63	328	25074	2233	7195	77.70	91.82	508	653.77	278	357.8
 #     """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # remove empty lines at start and beginning of F_CONTENT
     F_CONTENT = F_CONTENT.strip()
     F_CONTENT = F_CONTENT.splitlines()
@@ -51,38 +51,42 @@ if __name__ == '__main__':
 
     metrics_res = {}
 
-    for i in range(len(['DPM', 'FRCNN', 'SDP'])):
+    for i in range(len(["DPM", "FRCNN", "SDP"])):
         for start in start_ixs:
-            f_list = F_CONTENT[start + i].strip().split('\t')
+            f_list = F_CONTENT[start + i].strip().split("\t")
             metrics_res[f_list[0]] = f_list[1:]
 
         if MOTS:
             break
 
-    metrics_names = F_CONTENT[0].replace('\n', '').split()
+    metrics_names = F_CONTENT[0].replace("\n", "").split()
 
     print(metrics_names)
 
-    metrics_res['ALL'] = F_CONTENT[-1].strip().split('\t')[1:]
+    metrics_res["ALL"] = F_CONTENT[-1].strip().split("\t")[1:]
 
     for full_seq_name, data in metrics_res.items():
-        seq_name = '-'.join(full_seq_name.split('-')[:2])
-        detection_name = full_seq_name.split('-')[-1]
+        seq_name = "-".join(full_seq_name.split("-")[:2])
+        detection_name = full_seq_name.split("-")[-1]
 
         if MOTS:
-            print(f"{seq_name} & "
+            print(
+                f"{seq_name} & "
                 f"{float(data[metrics_names.index('sMOTSA')]):.1f} & "
                 f"{float(data[metrics_names.index('IDF1')]):.1f} & "
                 f"{float(data[metrics_names.index('MOTSA')]):.1f} & "
                 f"{data[metrics_names.index('FP')]} & "
                 f"{data[metrics_names.index('FN')]} & "
-                f"{data[metrics_names.index('IDSW')]} \\\\")
+                f"{data[metrics_names.index('IDSW')]} \\\\"
+            )
         else:
-            print(f"{seq_name} & {detection_name} & "
+            print(
+                f"{seq_name} & {detection_name} & "
                 f"{float(data[metrics_names.index('MOTA')]):.1f} & "
                 f"{float(data[metrics_names.index('IDF1')]):.1f} & "
                 f"{data[metrics_names.index('MT')]} & "
                 f"{data[metrics_names.index('ML')]} & "
                 f"{data[metrics_names.index('FP')]} & "
                 f"{data[metrics_names.index('FN')]} & "
-                f"{data[metrics_names.index('IDSW')]} \\\\")
+                f"{data[metrics_names.index('IDSW')]} \\\\"
+            )

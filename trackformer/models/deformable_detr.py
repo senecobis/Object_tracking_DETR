@@ -18,9 +18,15 @@ import torch.nn.functional as F
 from torch import nn
 
 from ..util import box_ops
-from ..util.misc import (NestedTensor, accuracy, get_world_size,
-                         inverse_sigmoid, is_dist_avail_and_initialized,
-                         nested_tensor_from_tensor_list, sigmoid_focal_loss)
+from ..util.misc import (
+    NestedTensor,
+    accuracy,
+    get_world_size,
+    inverse_sigmoid,
+    is_dist_avail_and_initialized,
+    nested_tensor_from_tensor_list,
+    sigmoid_focal_loss,
+)
 from .detr import DETR, PostProcess, SetCriterion
 
 
@@ -30,8 +36,18 @@ def _get_clones(module, N):
 
 class DeformableDETR(DETR):
     """ This is the Deformable DETR module that performs object detection """
-    def __init__(self, backbone, transformer, num_classes, num_queries, num_feature_levels,
-                 aux_loss=True, with_box_refine=False, two_stage=False):
+
+    def __init__(
+        self,
+        backbone,
+        transformer,
+        num_classes,
+        num_queries,
+        num_feature_levels,
+        aux_loss=True,
+        with_box_refine=False,
+        two_stage=False,
+    ):
         """ Initializes the model.
         Parameters:
             backbone: torch module of the backbone to be used. See backbone.py
@@ -57,23 +73,36 @@ class DeformableDETR(DETR):
             input_proj_list = []
             for i in range(num_backbone_outs):
                 in_channels = num_channels[i]
-                input_proj_list.append(nn.Sequential(
-                    nn.Conv2d(in_channels, self.hidden_dim, kernel_size=1),
-                    nn.GroupNorm(32, self.hidden_dim),
-                ))
+                input_proj_list.append(
+                    nn.Sequential(
+                        nn.Conv2d(in_channels, self.hidden_dim, kernel_size=1),
+                        nn.GroupNorm(32, self.hidden_dim),
+                    )
+                )
             for _ in range(num_feature_levels - num_backbone_outs):
-                input_proj_list.append(nn.Sequential(
-                    nn.Conv2d(in_channels, self.hidden_dim, kernel_size=3, stride=2, padding=1),
-                    nn.GroupNorm(32, self.hidden_dim),
-                ))
+                input_proj_list.append(
+                    nn.Sequential(
+                        nn.Conv2d(
+                            in_channels,
+                            self.hidden_dim,
+                            kernel_size=3,
+                            stride=2,
+                            padding=1,
+                        ),
+                        nn.GroupNorm(32, self.hidden_dim),
+                    )
+                )
                 in_channels = self.hidden_dim
             self.input_proj = nn.ModuleList(input_proj_list)
         else:
-            self.input_proj = nn.ModuleList([
-                nn.Sequential(
-                    nn.Conv2d(num_channels[0], self.hidden_dim, kernel_size=1),
-                    nn.GroupNorm(32, self.hidden_dim),
-                )])
+            self.input_proj = nn.ModuleList(
+                [
+                    nn.Sequential(
+                        nn.Conv2d(num_channels[0], self.hidden_dim, kernel_size=1),
+                        nn.GroupNorm(32, self.hidden_dim),
+                    )
+                ]
+            )
         self.with_box_refine = with_box_refine
         self.two_stage = two_stage
 
@@ -100,7 +129,9 @@ class DeformableDETR(DETR):
             self.transformer.decoder.bbox_embed = self.bbox_embed
         else:
             nn.init.constant_(self.bbox_embed.layers[-1].bias.data[2:], -2.0)
-            self.class_embed = nn.ModuleList([self.class_embed for _ in range(num_pred)])
+            self.class_embed = nn.ModuleList(
+                [self.class_embed for _ in range(num_pred)]
+            )
             self.bbox_embed = nn.ModuleList([self.bbox_embed for _ in range(num_pred)])
             self.transformer.decoder.bbox_embed = None
         if two_stage:
@@ -154,8 +185,15 @@ class DeformableDETR(DETR):
 
             prev_src, _ = prev_feat.decompose()
 
-            if hasattr(self, 'combine'):
-                srcs.append(self.combine(torch.cat([self.input_proj[l](src), self.input_proj[l](prev_src)], dim=1)))
+            if hasattr(self, "combine"):
+                srcs.append(
+                    self.combine(
+                        torch.cat(
+                            [self.input_proj[l](src), self.input_proj[l](prev_src)],
+                            dim=1,
+                        )
+                    )
+                )
             else:
                 srcs.append(self.input_proj[l](src))
 
@@ -166,14 +204,24 @@ class DeformableDETR(DETR):
             _len_srcs = len(srcs)
             for l in range(_len_srcs, self.num_feature_levels):
                 if l == _len_srcs:
-                    if hasattr(self, 'combine'):
-                        src = self.combine(torch.cat([self.input_proj[l](features[-1].tensors), self.input_proj[l](prev_features[-1].tensors)], dim=1))
+                    if hasattr(self, "combine"):
+                        src = self.combine(
+                            torch.cat(
+                                [
+                                    self.input_proj[l](features[-1].tensors),
+                                    self.input_proj[l](prev_features[-1].tensors),
+                                ],
+                                dim=1,
+                            )
+                        )
                     else:
                         src = self.input_proj[l](features[-1].tensors)
                 else:
                     src = self.input_proj[l](srcs[-1])
                 m = samples.mask
-                mask = F.interpolate(m[None].float(), size=src.shape[-2:]).to(torch.bool)[0]
+                mask = F.interpolate(m[None].float(), size=src.shape[-2:]).to(
+                    torch.bool
+                )[0]
                 pos_l = self.backbone[1](NestedTensor(src, mask)).to(src.dtype)
                 srcs.append(src)
                 masks.append(mask)
@@ -182,8 +230,9 @@ class DeformableDETR(DETR):
         query_embeds = None
         if not self.two_stage:
             query_embeds = self.query_embed.weight
-        hs, memory, init_reference, inter_references, enc_outputs_class, enc_outputs_coord_unact = \
-            self.transformer(srcs, masks, pos, query_embeds, targets)
+        hs, memory, init_reference, inter_references, enc_outputs_class, enc_outputs_coord_unact = self.transformer(
+            srcs, masks, pos, query_embeds, targets
+        )
 
         outputs_classes = []
         outputs_coords = []
@@ -206,24 +255,32 @@ class DeformableDETR(DETR):
         outputs_class = torch.stack(outputs_classes)
         outputs_coord = torch.stack(outputs_coords)
 
-        out = {'pred_logits': outputs_class[-1],
-               'pred_boxes': outputs_coord[-1],
-               'hs_embed': hs[-1]}
+        out = {
+            "pred_logits": outputs_class[-1],
+            "pred_boxes": outputs_coord[-1],
+            "hs_embed": hs[-1],
+        }
 
         if self.aux_loss:
-            out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord)
+            out["aux_outputs"] = self._set_aux_loss(outputs_class, outputs_coord)
 
         if self.two_stage:
             enc_outputs_coord = enc_outputs_coord_unact.sigmoid()
-            out['enc_outputs'] = {'pred_logits': enc_outputs_class, 'pred_boxes': enc_outputs_coord}
+            out["enc_outputs"] = {
+                "pred_logits": enc_outputs_class,
+                "pred_boxes": enc_outputs_coord,
+            }
 
         offset = 0
         memory_slices = []
         batch_size, _, channels = memory.shape
         for src in srcs:
             _, _, height, width = src.shape
-            memory_slice = memory[:, offset:offset + height * width].permute(0, 2, 1).view(
-                batch_size, channels, height, width)
+            memory_slice = (
+                memory[:, offset : offset + height * width]
+                .permute(0, 2, 1)
+                .view(batch_size, channels, height, width)
+            )
             memory_slices.append(memory_slice)
             offset += height * width
 
@@ -238,8 +295,10 @@ class DeformableDETR(DETR):
         # this is a workaround to make torchscript happy, as torchscript
         # doesn't support dictionary with non-homogeneous values, such
         # as a dict having both a Tensor and a list.
-        return [{'pred_logits': a, 'pred_boxes': b}
-                for a, b in zip(outputs_class[:-1], outputs_coord[:-1])]
+        return [
+            {"pred_logits": a, "pred_boxes": b}
+            for a, b in zip(outputs_class[:-1], outputs_coord[:-1])
+        ]
 
 
 class DeformablePostProcess(PostProcess):
@@ -254,7 +313,7 @@ class DeformablePostProcess(PostProcess):
                           For evaluation, this must be the original image size (before any data augmentation)
                           For visualization, this should be the image size after data augment, but before padding
         """
-        out_logits, out_bbox = outputs['pred_logits'], outputs['pred_boxes']
+        out_logits, out_bbox = outputs["pred_logits"], outputs["pred_boxes"]
 
         assert len(out_logits) == len(target_sizes)
         assert target_sizes.shape[1] == 2
@@ -281,8 +340,9 @@ class DeformablePostProcess(PostProcess):
         boxes = boxes * scale_fct[:, None, :]
 
         results = [
-            {'scores': s, 'scores_no_object': 1 - s, 'labels': l, 'boxes': b}
-            for s, l, b in zip(scores, labels, boxes)]
+            {"scores": s, "scores_no_object": 1 - s, "labels": l, "boxes": b}
+            for s, l, b in zip(scores, labels, boxes)
+        ]
 
         if results_mask is not None:
             for i, mask in enumerate(results_mask):
