@@ -270,7 +270,7 @@ if __name__ == "__main__":
         load_results_dir=None,
         generate_attention_maps=False,
         tracker_cfg=track_yaml["tracker_cfg"],
-        obj_detect_checkpoint_file=working_dir + "models/ExacavDETR_101_20epochs/checkpoint_excavDETR_epoch_21.pth",
+        obj_detect_checkpoint_file=working_dir + "models/checkpoint_excavDETR_epoch_21.pth",
         frame_range={"start": 0.0, "end": 1.0},
         _config="cfgs/track.yaml",
         obj_detector_model=None,
