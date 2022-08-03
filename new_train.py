@@ -631,60 +631,6 @@ if __name__ == "__main__":
         import_config()
     )
 
-    # config = {**train_yaml, **deformable_yaml, **tracking_yaml, **mots20_yaml,
-    # **full_res_yaml, **focal_loss_yaml} # dictionary concatenation
-
-    """
-    train_mots20 = False
-    if train_mots20:
-        config = {**train_yaml, **tracking_yaml, **mots20_yaml} # dictionary concatenation
-        config["model_name"] = "ScratchedMots20Model"
-        config["save_model_interval"] = 1
-
-        wandb.config = config
-        args = nested_dict_to_namespace(config)
-
-        args.resume = "models/TrackformerDetrRetrained/checkpoint_epoch_6.pth"
-        args.output_dir="/home/roberto/old_trackformer/models/" + config["model_name"]
-        args.mot_path_train="data/MOTS20"
-        args.mot_path_val="data/MOTS20"
-        args.train_split="mots20_train_1_coco"
-        args.val_split="mots20_val_1_coco"
-        args.epochs= 21
-        args.val_interval = 1
-        args.start_last_layers_from_scratch = True
-        args.backbone = "resnet101"
-
-        train(args, None)
-
-    else :
-        config = {**train_yaml, **tracking_yaml, **mots20_yaml} # dictionary concatenation
-        wandb.config = config
-
-        # override configuration
-        config["use_excav_detr"] = train_mots20
-        config["model_name"] = "ScratchedExacvDetr"
-        config["output_dir"] = "/home/roberto/old_trackformer/models/" + config["model_name"]
-        config["eval_train"] = True
-        config["save_model_interval"] = 5
-        config["epochs"] = 21
-
-        args = nested_dict_to_namespace(config)
-
-        args.resume = "/home/roberto/old_trackformer/models/ExcavDETR_orig/detr_panoptic_model.pth"
-        args.mot_path_train="data/MOTS20"
-        args.mot_path_val="data/MOTS20"
-        args.train_split="mots20_train_1_coco"
-        args.val_split="mots20_val_1_coco"
-        args.val_interval = 1
-        args.num_workers = 0
-        args.start_last_layers_from_scratch = False
-        args.backbone = "resnet50"
-
-
-
-        train(args, None)
-    """
     train_fb_DETR = True
     if train_fb_DETR:
         config = {
@@ -693,8 +639,6 @@ if __name__ == "__main__":
             **mots20_yaml,
         }  # dictionary concatenation
         config["model_name"] = "COCO_DETR"
-        config["save_model_interval"] = 1
-
         wandb.config = config
         args = nested_dict_to_namespace(config)
 
